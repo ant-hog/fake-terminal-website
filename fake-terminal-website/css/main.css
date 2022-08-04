@@ -1,5 +1,5 @@
 ::selection {
-    background: #f7d07e;
+    background: #73fa91;
 }
 html, body {
     width: 100%;
@@ -46,7 +46,7 @@ body {
     user-select: none;
 }
 .prompt-color {
-    color: #e09f14;
+    color: #2f7e25;
 }
 .input-line {
     display: -webkit-box;
@@ -66,12 +66,6 @@ body {
     box-flex: 1;
 }
 
-#githubImg img {
-    position: fixed;
-    bottom: 0; right: 0;
-    border: 0;
-}
-
 /* SIDE NAV */
 
 #sidenavBtn {
@@ -89,24 +83,11 @@ body {
     z-index: 9;
     top: 0;
     left: 0;
-    background-color: #e09f14;
+    background-color: #2f7e25;
     opacity: 0.8;
     overflow-x: hidden;
     transition: 0.3s;
     padding-top: 60px;
-}
-#sidenav img {
-    display: block;
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    bottom: 100px;
-    transition: 0.3s;
-    opacity: 0;
-}
-
-#sidenav img:focus {
-    outline: none;
 }
 
 #sidenav button {
@@ -121,7 +102,7 @@ body {
     border:none;
 }
 #sidenav button:hover {
-    color: #442e00;
+    color: #1d4125;
 }
 
 @media screen and (max-height: 450px) {
@@ -137,10 +118,6 @@ body {
 }
 
 @media screen and (max-width: 900px) {
-    #githubImg img {
-        transform: translateX(900px);
-    }
-
     #container {
         margin-right: 0;
     }
