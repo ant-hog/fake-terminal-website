@@ -26,11 +26,12 @@ var configs = (function () {
         rmdir_help: "Remove directory, this command will only work if the folders are empty.",
         touch_help: "Change file timestamps. If the file doesn't exist, it's created an empty one.",
         sudo_help: "Execute a command as the superuser.",
-        welcome: "Welcome to FTW (Fake Terminal Website)! :)\nIn order for you to start customizing the texts, go to js/main.js and replace the texts located at the configs var.\nIn that same file, you can define all the fake files you want as well as their content. This files will appear on the sidenav.\nAlso, don't forget to change the colors on the css/main.css file as well as the website title on the index.html file.\nNow in order to get started, feel free to either execute the 'help' command or use the more user-friendly colored sidenav at your left.\nIn order to skip text rolling, double click/touch anywhere.",
+        welcome: "Welcome to Antony Hogan's Website\n\nNow in order to get started, feel free to either execute the 'help' command or use the more user-friendly colored sidenav at your left.\n\nIn order to skip text rolling, double click/touch anywhere.\n",
         internet_explorer_warning: "NOTE: I see you're using internet explorer, this website won't work properly.",
         welcome_file_name: "welcome_message.txt",
         invalid_command_message: "<value>: command not found.",
         reboot_message: "Preparing to reboot...\n\n3...\n\n2...\n\n1...\n\nRebooting...\n\n",
+        startup_message: "Power on self test...\n\nPass...\n\nGrand Unified Bootloader 2...\n\nSuccess...\n\nKernel initialization...\n\nSuccess...\n\nStarting Systemd...\n\n",
         permission_denied_message: "Unable to '<value>', permission denied.",
         sudo_message: "Unable to sudo using a web client.",
         usage: "Usage",
@@ -42,8 +43,8 @@ var configs = (function () {
         accesible_cores: "Accessible cores",
         language: "Language",
         value_token: "<value>",
-        host: "example.com",
-        user: "guest",
+        host: "antonyhogan.co.uk",
+        user: "admin",
         is_root: false,
         type_delay: 20
     };
@@ -67,11 +68,12 @@ var files = (function () {
         }
     };
     Singleton.defaultOptions = {
-        "about.txt": "This website was made using only pure JavaScript with no extra libraries.\nI made it dynamic so anyone can use it, just download it from GitHub and change the config text according to your needs.\nIf you manage to find any bugs or security issues feel free to email me: luisbraganca@protonmail.com",
-        "getting_started.txt": "First, go to js/main.js and replace all the text on both singleton vars.\n- configs: All the text used on the website.\n- files: All the fake files used on the website. These files are also used to be listed on the sidenav.\nAlso please notice if a file content is a raw URL, when clicked/concatenated it will be opened on a new tab.\nDon't forget also to:\n- Change the page title on the index.html file\n- Change the website color on the css/main.css\n- Change the images located at the img folder. The suggested sizes are 150x150 for the avatar and 32x32/16x16 for the favicon.",
-        "contact.txt": "mail@example.com",
-        "social_network_1.txt": "https://www.socialite.com/username/",
-        "social_network_2.txt": "https://example.com/profile/9382/"
+        "about.txt": "About me\nI'm a dad, husband, and workaholic (coffee addict) who is always up for a new challenge,\nno thank you to another round of colic however. I enjoy creative writing (through Dungeons and Dragons!),\ngaming with my friends, home automation, audio books, music, and most sci-fi shows.\n\nAbout this site\nThis is the tiny part of the web that I can call my own, and although most of it's private I invite you to check out my online CV.\nI couldn't resist using and editing this awesome client-side JavaScript design which was created by Luís Bragança, the source code links to my edited branch on GitHub.",
+        "blog.url": "https://blog.antonyhogan.co.uk",
+        "cv.url": "https://drive.google.com/file/d/1TuyGPVFMHtSUhxZMADQemumwpgeAOAd8/view?usp=drivesdk",
+        "email.txt": "ant@antonyhogan.co.uk",
+        "linked_in.url": "https://uk.linkedin.com/in/antony-hogan-8745a6159",
+        "source_code.url": "https://github.com/ant-hog/fake-terminal-website/tree/fake-terminal-website-ant-hog-branch"
     };
     return {
         getInstance: function (options) {
@@ -87,6 +89,8 @@ var main = (function () {
      * Aux functions
      */
     var isUsingIE = window.navigator.userAgent.indexOf("MSIE ") > 0 || !!navigator.userAgent.match(/Trident.*rv\:11\./);
+    var cmdHistory=[];
+    var idxHistory = 0;
 
     var ignoreEvent = function (event) {
         event.preventDefault();
@@ -134,7 +138,7 @@ var main = (function () {
         SUDO: { value: "sudo", help: configs.getInstance().sudo_help }
     };
 
-    var Terminal = function (prompt, cmdLine, output, sidenav, profilePic, user, host, root, outputTimer) {
+    var Terminal = function (prompt, cmdLine, output, sidenav, user, host, root, outputTimer) {
         if (!(prompt instanceof Node) || prompt.nodeName.toUpperCase() !== "DIV") {
             throw new InvalidArgumentException("Invalid value " + prompt + " for argument 'prompt'.");
         }
@@ -147,11 +151,7 @@ var main = (function () {
         if (!(sidenav instanceof Node) || sidenav.nodeName.toUpperCase() !== "DIV") {
             throw new InvalidArgumentException("Invalid value " + sidenav + " for argument 'sidenav'.");
         }
-        if (!(profilePic instanceof Node) || profilePic.nodeName.toUpperCase() !== "IMG") {
-            throw new InvalidArgumentException("Invalid value " + profilePic + " for argument 'profilePic'.");
-        }
         (typeof user === "string" && typeof host === "string") && (this.completePrompt = user + "@" + host + ":~" + (root ? "#" : "$"));
-        this.profilePic = profilePic;
         this.prompt = prompt;
         this.cmdLine = cmdLine;
         this.output = output;
@@ -193,6 +193,12 @@ var main = (function () {
             } else if (event.which === 9 || event.keyCode === 9) {
                 this.handleFill();
                 ignoreEvent(event);
+            } else if (event.which === 38 || event.keyCode === 38) {
+                this.handleHistory(event);
+                ignoreEvent(event);
+            } else if (event.which === 40 || event.keyCode === 40) {
+                this.handleHistory(event);
+                ignoreEvent(event);
             }
         }.bind(this));
         this.reset();
@@ -232,7 +238,6 @@ var main = (function () {
 
     Terminal.prototype.handleSidenav = function (event) {
         if (this.sidenavOpen) {
-            this.profilePic.style.opacity = 0;
             this.sidenavElements.forEach(Terminal.makeElementDisappear);
             this.sidenav.style.width = "50px";
             document.getElementById("sidenavBtn").innerHTML = "&#9776;";
@@ -241,7 +246,6 @@ var main = (function () {
             this.sidenav.style.width = "300px";
             this.sidenavElements.forEach(Terminal.makeElementAppear);
             document.getElementById("sidenavBtn").innerHTML = "&times;";
-            this.profilePic.style.opacity = 1;
             this.sidenavOpen = true;
         }
         document.getElementById("sidenavBtn").blur();
@@ -268,16 +272,16 @@ var main = (function () {
     };
 
     Terminal.prototype.handleFill = function () {
-        var cmdComponents = this.cmdLine.value.trim().split(" ");
+        var cmdComponents = this.cmdLine.value.trim().split(" ");        
+        cmdHistory.push(this.cmdLine.value.trim());
+        idxHistory = cmdHistory.length;
+        
         if ((cmdComponents.length <= 1) || (cmdComponents.length === 2 && cmdComponents[0] === cmds.CAT.value)) {
             this.lock();
             var possibilities = [];
             if (cmdComponents[0].toLowerCase() === cmds.CAT.value) {
                 if (cmdComponents.length === 1) {
                     cmdComponents[1] = "";
-                }
-                if (configs.getInstance().welcome_file_name.startsWith(cmdComponents[1].toLowerCase())) {
-                    possibilities.push(cmds.CAT.value + " " + configs.getInstance().welcome_file_name);
                 }
                 for (var file in files.getInstance()) {
                     if (file.startsWith(cmdComponents[1].toLowerCase())) {
@@ -308,6 +312,8 @@ var main = (function () {
 
     Terminal.prototype.handleCmd = function () {
         var cmdComponents = this.cmdLine.value.trim().split(" ");
+        cmdHistory.push(this.cmdLine.value.trim());
+        idxHistory = cmdHistory.length;
         this.lock();
         switch (cmdComponents[0]) {
             case cmds.CAT.value:
@@ -346,7 +352,21 @@ var main = (function () {
                 break;
         };
     };
-
+    
+    Terminal.prototype.handleHistory = function (event) {
+      if (event.which === 38 || event.keyCode === 38) {
+         if ((cmdHistory.length > 0) && (cmdHistory.length >= idxHistory) && idxHistory > 0){
+           idxHistory--;
+           this.cmdLine.value = cmdHistory[idxHistory];
+         }
+      } else if (event.which === 40 || event.keyCode === 40) {
+        if ((cmdHistory.length > 0) && (cmdHistory.length > idxHistory + 1)){
+          idxHistory++;
+          this.cmdLine.value = cmdHistory[idxHistory];
+        }
+      }
+    };
+    
     Terminal.prototype.cat = function (cmdComponents) {
         var result;
         if (cmdComponents.length <= 1) {
@@ -360,7 +380,7 @@ var main = (function () {
     };
 
     Terminal.prototype.ls = function () {
-        var result = ".\n..\n" + configs.getInstance().welcome_file_name + "\n";
+        var result = ".\n..\n";
         for (var file in files.getInstance()) {
             result += file + "\n";
         }
@@ -396,7 +416,13 @@ var main = (function () {
     };
 
     Terminal.prototype.reboot = function () {
-        this.type(configs.getInstance().reboot_message, this.reset.bind(this));
+        this.type(configs.getInstance().reboot_message, this.startup.bind(this));
+    };
+    
+    Terminal.prototype.startup = function () {
+        this.output.textContent = "";
+        this.prompt.textContent = "";
+        this.type(configs.getInstance().startup_message, this.reset.bind(this));
     };
 
     Terminal.prototype.reset = function () {
@@ -474,7 +500,6 @@ var main = (function () {
                 document.getElementById("cmdline"),
                 document.getElementById("output"),
                 document.getElementById("sidenav"),
-                document.getElementById("profilePic"),
                 configs.getInstance().user,
                 configs.getInstance().host,
                 configs.getInstance().is_root,
